@@ -23,17 +23,16 @@ import javax.ws.rs.core.SecurityContext;
 public class AiSearchAssistantApiServiceImpl implements AiSearchAssistantApiService {
 
     private ChatMessageListDTO chatMessageListDTO = new ChatMessageListDTO();
-    private ChatMessageDTO assistantMessage = new ChatMessageDTO().role("user");
-    private ChatMessageDTO userMessage = new ChatMessageDTO().role("assistant");
-
 
     public Response getAisearchassistant(String query, String action, MessageContext messageContext) {
 
         if (action.equals("chat")){
 
-            userMessage.setContent(query);
+            ChatMessageDTO assistantMessage = new ChatMessageDTO().role("assistant");
+            ChatMessageDTO userMessage = new ChatMessageDTO().role("user");
 
             assistantMessage.setContent("Hi there! I'm Chatbot UI, an AI assistant. I can help you with things like answering questions, providing information, and helping with tasks. How can I help you?");
+            userMessage.setContent(query);
 
             List<ChatMessageDTO> messages = chatMessageListDTO.getMessages();
 
@@ -45,7 +44,7 @@ public class AiSearchAssistantApiServiceImpl implements AiSearchAssistantApiServ
             return Response.ok().entity(chatMessageListDTO).build();
 
         } else if (action.equals("clearChat")){
-
+            ChatMessageDTO assistantMessage = new ChatMessageDTO().role("assistant");
             assistantMessage.setContent("Hi there! I'm Chatbot UI, an AI assistant. I can help you with things like answering questions, providing information, and helping with tasks. How can I help you?");
 
             List<ChatMessageDTO> messages = chatMessageListDTO.getMessages();
@@ -60,7 +59,7 @@ public class AiSearchAssistantApiServiceImpl implements AiSearchAssistantApiServ
         } else if (action.equals("getChatHistory")){
 
             List<ChatMessageDTO> messages = chatMessageListDTO.getMessages();
-
+            ChatMessageDTO assistantMessage = new ChatMessageDTO().role("assistant");
             assistantMessage.setContent("Hi there! I'm Chatbot UI, an AI assistant. I can help you with things like answering questions, providing information, and helping with tasks. How can I help you?");
 
             if (messages.isEmpty()) {

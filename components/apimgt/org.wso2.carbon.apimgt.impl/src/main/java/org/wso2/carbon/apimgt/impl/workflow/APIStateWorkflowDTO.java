@@ -35,7 +35,8 @@ public class APIStateWorkflowDTO extends WorkflowDTO{
     private String apiContext;
     private String apiType;
     private String gatewayVendor;
-    
+    private Boolean isAPIProduct;
+    private String swaggerDefinition;
     public String getInvoker() {
         return invoker;
     }
@@ -129,6 +130,22 @@ public class APIStateWorkflowDTO extends WorkflowDTO{
 
     public void setGatewayVendor(String gatewayVendor) {
         this.gatewayVendor = gatewayVendor;
+    }
+
+    public String getSwaggerDefinition() {
+        return swaggerDefinition;
+    }
+
+    public void setSwaggerDefinition(String swaggerDefinition) {
+        this.swaggerDefinition = swaggerDefinition;
+    }
+
+    public Boolean getAPIProduct() {
+        return isAPIProduct;
+    }
+
+    public void setAPIProduct(Boolean APIProduct) {
+        isAPIProduct = APIProduct;
     }
 
 }

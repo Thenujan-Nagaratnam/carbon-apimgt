@@ -242,6 +242,28 @@ public class TenantWorkflowConfigHolder implements Serializable {
                 }
 
                 workflowExecutorMap.put(WorkflowConstants.WF_TYPE_AM_API_STATE, workFlowExecutor);
+//
+//                workflowElem = workflowExtensionsElem.getFirstChildWithName(new QName(WorkflowConstants.API_STATE_CHANGE));
+//                if (workflowElem == null) {
+//                    // TO handle migrated environment, create the default simple workflow executor
+//                    workflowElem = OMAbstractFactory.getOMFactory()
+//                            .createOMElement(new QName(WorkflowConstants.API_STATE_CHANGE));
+//                    executorClass = WorkflowConstants.DEFAULT_EXECUTOR_AI_SEARCH_ASSISTANT;
+//                    workflowElem.addAttribute(WorkflowConstants.EXECUTOR, executorClass, null);
+//                } else {
+//                    executorClass = workflowElem.getAttributeValue(new QName(WorkflowConstants.EXECUTOR));
+//                }
+//                try {
+//                    clazz = TenantWorkflowConfigHolder.class.getClassLoader().loadClass(executorClass);
+//                    workFlowExecutor = (WorkflowExecutor) clazz.newInstance();
+//                    loadProperties(workflowElem, workFlowExecutor);
+//                } catch (ClassNotFoundException e) {
+//                    workFlowExecutor = new AISearchAssistantWorkflowExecutor();
+//                }
+//
+//
+//                workflowExecutorMap.put(WorkflowConstants.WF_TYPE_AM_API_STATE_AI, workFlowExecutor);
+
 
                 workflowElem =
                         workflowExtensionsElem.getFirstChildWithName(new QName(WorkflowConstants

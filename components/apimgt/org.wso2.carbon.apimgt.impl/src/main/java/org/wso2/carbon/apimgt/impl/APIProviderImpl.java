@@ -2914,6 +2914,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             String apiType;
             String apiVersion;
             String currentStatus;
+            String swaggerDefinition;
             String uuid;
             int apiOrApiProductId;
             boolean isApiProduct = apiTypeWrapper.isAPIProduct();
@@ -2928,6 +2929,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                 apiVersion = apiProduct.getId().getVersion();
                 currentStatus = apiProduct.getState();
                 uuid = apiProduct.getUuid();
+                swaggerDefinition = "";
                 apiOrApiProductId = apiMgtDAO.getAPIProductId(apiTypeWrapper.getApiProduct().getId());
                 workflowType = WorkflowConstants.WF_TYPE_AM_API_PRODUCT_STATE;
             } else {
@@ -2939,6 +2941,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                 apiVersion = api.getId().getVersion();
                 currentStatus = api.getStatus();
                 uuid = api.getUuid();
+                swaggerDefinition = api.getSwaggerDefinition();
                 apiOrApiProductId = apiMgtDAO.getAPIID(uuid);
                 workflowType = WorkflowConstants.WF_TYPE_AM_API_STATE;
             }
@@ -2954,7 +2957,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             // if the workflow has started, then executor should not fire again
             if (!WorkflowStatus.CREATED.equals(apiWFState)) {
                 response = executeStateChangeWorkflow(currentStatus, action, apiName, apiContext, apiType,
-                        apiVersion, providerName, apiOrApiProductId, uuid, gatewayVendor, workflowType);
+                        apiVersion, providerName, apiOrApiProductId, uuid, gatewayVendor, workflowType, swaggerDefinition, isApiProduct);
                 // get the workflow state once the executor is executed.
                 wfDTO = apiMgtDAO.retrieveWorkflowFromInternalReference(Integer.toString(apiOrApiProductId),
                         workflowType);
@@ -3005,7 +3008,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
     private APIStateChangeResponse executeStateChangeWorkflow(String currentStatus, String action, String apiName,
                                                               String apiContext, String apiType, String apiVersion,
                                                               String providerName, int apiOrApiProductId, String uuid,
-                                                              String gatewayVendor, String workflowType)
+                                                              String gatewayVendor, String workflowType, String swaggerDefinition, Boolean isApiProduct)
             throws APIManagementException {
 
         APIStateChangeResponse response = new APIStateChangeResponse();
@@ -3014,7 +3017,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
              WorkflowExecutorFactory.getInstance().getWorkflowExecutor(workflowType);
             APIStateWorkflowDTO apiStateWorkflow = setAPIStateWorkflowDTOParameters(currentStatus, action, apiName,
              apiContext, apiType, apiVersion, providerName, apiOrApiProductId, uuid, gatewayVendor, workflowType,
-                    apiStateWFExecutor);
+                    apiStateWFExecutor, swaggerDefinition, isApiProduct);
             WorkflowResponse workflowResponse = apiStateWFExecutor.execute(apiStateWorkflow);
             response.setWorkflowResponse(workflowResponse);
         } catch (WorkflowException e) {
@@ -3044,7 +3047,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                                                                  String context, String apiType, String version,
                                                                  String providerName, int apiOrApiProductId,
                                                                  String uuid, String gatewayVendor, String workflowType,
-                                                                 WorkflowExecutor apiStateWFExecutor) {
+                                                                 WorkflowExecutor apiStateWFExecutor,String swaggerDefinition, Boolean isApiProduct) {
 
         WorkflowProperties workflowProperties = getAPIManagerConfiguration().getWorkflowProperties();
         APIStateWorkflowDTO stateWorkflowDTO = new APIStateWorkflowDTO();
@@ -3066,6 +3069,8 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         stateWorkflowDTO.setWorkflowReference(Integer.toString(apiOrApiProductId));
         stateWorkflowDTO.setInvoker(this.username);
         stateWorkflowDTO.setApiUUID(uuid);
+        stateWorkflowDTO.setSwaggerDefinition(swaggerDefinition);
+        stateWorkflowDTO.setAPIProduct(isApiProduct);
         String workflowDescription = "Pending lifecycle state change action: " + action;
         stateWorkflowDTO.setWorkflowDescription(workflowDescription);
         return stateWorkflowDTO;

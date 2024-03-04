@@ -18,12 +18,19 @@
 
 package org.wso2.carbon.apimgt.impl.workflow;
 
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.simple.JSONObject;
 import org.wso2.carbon.apimgt.api.WorkflowResponse;
+import org.wso2.carbon.apimgt.api.model.API;
 import org.wso2.carbon.apimgt.impl.dto.WorkflowDTO;
 
 /**
@@ -44,6 +51,17 @@ public class APIStateChangeSimpleWorkflowExecutor extends WorkflowExecutor {
 
     @Override
     public WorkflowResponse execute(WorkflowDTO workflowDTO) throws WorkflowException {
+
+        APIStateWorkflowDTO apiStateWorkflowDTO = (APIStateWorkflowDTO) workflowDTO;
+
+        String apiLCAction = apiStateWorkflowDTO.getApiLCAction();
+
+        if (apiLCAction.equals("Publish") || apiLCAction.equals("Deploy as a Prototype") || apiLCAction.equals("Re-Publish")){   // Publish , Deploy as a Prototype , Re-Publish
+            publishAPIData(apiStateWorkflowDTO);
+        } else if (apiLCAction.equals("Retire") || apiLCAction.equals("Demote to Created") || apiLCAction.equals("Block") || apiLCAction.equals("Deprecate")) {  // Demote to Created , Block , Deprecate , Retire
+            deleteAPIData(apiStateWorkflowDTO);
+        }
+
         workflowDTO.setStatus(WorkflowStatus.APPROVED);
         WorkflowResponse workflowResponse = complete(workflowDTO);     
         return workflowResponse;
@@ -53,6 +71,101 @@ public class APIStateChangeSimpleWorkflowExecutor extends WorkflowExecutor {
     public WorkflowResponse complete(WorkflowDTO workflowDTO) throws WorkflowException {
         return new GeneralWorkflowResponse();
     }
-    
+    private void deleteAPIData(APIStateWorkflowDTO apiStateWorkflowDTO){
+        try {
+            URL url = new URL("http://localhost:5000/api");
+
+            // Open a connection
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+            // Set the request method to POST
+            connection.setRequestMethod("POST");
+
+            // Enable output and input streams
+            connection.setDoOutput(true);
+            connection.setDoInput(true);
+
+            // Set request headers
+            connection.setRequestProperty("Content-Type", "application/json");
+
+            // Create JSON data to send
+            JSONObject jsonInput = new JSONObject();
+            jsonInput.put("deleted", true);
+            jsonInput.put("action", apiStateWorkflowDTO.getApiLCAction());
+
+            // Write JSON data to the connection output stream
+            try (DataOutputStream outputStream = new DataOutputStream(connection.getOutputStream())) {
+                outputStream.writeBytes(String.valueOf(jsonInput));
+                outputStream.flush();
+            }
+
+            // Get response code
+            int responseCode = connection.getResponseCode();
+            System.out.println("Response Code: " + responseCode);
+
+            // Read response from the server
+            try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                String inputLine;
+                StringBuilder response = new StringBuilder();
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                System.out.println("Response: " + response.toString());
+            }
+
+            // Close connection
+            connection.disconnect();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    private void publishAPIData(APIStateWorkflowDTO apiStateWorkflowDTO){
+        try {
+            URL url = new URL("http://localhost:5000/api");
+
+            // Open a connection
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+            // Set the request method to POST
+            connection.setRequestMethod("POST");
+
+            // Enable output and input streams
+            connection.setDoOutput(true);
+            connection.setDoInput(true);
+
+            // Set request headers
+            connection.setRequestProperty("Content-Type", "application/json");
+
+            // Create JSON data to send
+            JSONObject jsonInput = new JSONObject();
+            jsonInput.put("swaggerDefinition", apiStateWorkflowDTO.getSwaggerDefinition());
+            jsonInput.put("action", apiStateWorkflowDTO.getApiLCAction());
+
+            // Write JSON data to the connection output stream
+            try (DataOutputStream outputStream = new DataOutputStream(connection.getOutputStream())) {
+                outputStream.writeBytes(String.valueOf(jsonInput));
+                outputStream.flush();
+            }
+
+            // Get response code
+            int responseCode = connection.getResponseCode();
+            System.out.println("Response Code: " + responseCode);
+
+            // Read response from the server
+            try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                String inputLine;
+                StringBuilder response = new StringBuilder();
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                System.out.println("Response: " + response.toString());
+            }
+
+            // Close connection
+            connection.disconnect();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
    
 }

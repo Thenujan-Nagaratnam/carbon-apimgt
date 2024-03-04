@@ -36,6 +36,8 @@ public class WorkflowConstants {
     
     public static final String WF_TYPE_AM_API_STATE = "AM_API_STATE";
 
+    public static final String WF_TYPE_AM_API_STATE_AI = "AM_API_STATE_AI";
+
     public static final String WF_TYPE_AM_API_PRODUCT_STATE = "AM_API_PRODUCT_STATE";
 
     public static final String WF_TYPE_AM_APPLICATION_REGISTRATION_PRODUCTION =
@@ -111,7 +113,7 @@ public class WorkflowConstants {
                     "         <wor:callBackURL>$4</wor:callBackURL>\n" +
                     "      </wor:UserSignupProcessRequest>";
     
-    public static final String DEFAULT_EXECUTOR_API_STATE_CHANGE = 
+    public static final String DEFAULT_EXECUTOR_API_STATE_CHANGE =
             "org.wso2.carbon.apimgt.impl.workflow.APIStateChangeSimpleWorkflowExecutor";
     public static final String DEFAULT_EXECUTOR_API_PRODUCT_STATE_CHANGE =
             "org.wso2.carbon.apimgt.impl.workflow.APIProductStateChangeSimpleWorkflowExecutor";

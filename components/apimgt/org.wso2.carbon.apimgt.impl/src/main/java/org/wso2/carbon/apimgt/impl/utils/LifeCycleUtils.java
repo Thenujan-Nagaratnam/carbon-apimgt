@@ -11,6 +11,7 @@ import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
 import org.wso2.carbon.apimgt.impl.factory.PersistenceFactory;
 import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
+import org.wso2.carbon.apimgt.impl.notification.AISearchAssistantPublisherConstants;
 import org.wso2.carbon.apimgt.impl.notification.NotificationDTO;
 import org.wso2.carbon.apimgt.impl.notification.NotificationExecutor;
 import org.wso2.carbon.apimgt.impl.notification.NotifierConstants;
@@ -37,6 +38,11 @@ import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import javax.cache.Caching;
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.*;
 
 /**
@@ -68,7 +74,8 @@ public class LifeCycleUtils {
 
         //Sending Notifications to existing subscribers
         if (APIConstants.PUBLISHED.equals(targetStatus)) {
-            sendEmailNotification(apiTypeWrapper, orgId);
+//            sendEmailNotification(apiTypeWrapper, orgId);
+            publishAPIToVectorDB(apiTypeWrapper, orgId);
         }
 
         // Change the lifecycle state in the database
@@ -360,6 +367,75 @@ public class LifeCycleUtils {
             }
         } catch (NotificationException e) {
             log.error(e.getMessage(), e);
+        }
+    }
+
+
+    /**
+     * This method used to send notifications to the previous subscribers of older versions of a given API
+     *
+     * @param apiTypeWrapper apiTypeWrapper object.
+     * @throws APIManagementException
+     */
+    private static void publishAPIToVectorDB(ApiTypeWrapper apiTypeWrapper, String organization)
+            throws APIManagementException {
+
+        JSONObject tenantConfig = APIUtil.getTenantConfig(organization);
+        int tenantId = APIUtil.getInternalOrganizationId(organization);
+        String isNotificationEnabled = "false";
+
+        if (tenantConfig.containsKey(AISearchAssistantPublisherConstants.NOTIFICATIONS_ENABLED)) {
+            isNotificationEnabled = (String) tenantConfig.get(NotifierConstants.NOTIFICATIONS_ENABLED);
+        }
+
+        if (JavaUtils.isTrueExplicitly(isNotificationEnabled)) {
+
+            try {
+                URL url = new URL("http://localhost:5000/api");
+
+                // Open a connection
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+                // Set the request method to POST
+                connection.setRequestMethod("POST");
+
+                // Enable output and input streams
+                connection.setDoOutput(true);
+                connection.setDoInput(true);
+
+                // Set request headers
+                connection.setRequestProperty("Content-Type", "application/json");
+
+                // Create JSON data to send
+                JSONObject jsonInput = new JSONObject();
+                jsonInput.put("Id", apiTypeWrapper.getName());
+                jsonInput.put("swagger", apiTypeWrapper.getApi().getSwaggerDefinition());
+
+                // Write JSON data to the connection output stream
+                try (DataOutputStream outputStream = new DataOutputStream(connection.getOutputStream())) {
+                    outputStream.writeBytes(String.valueOf(jsonInput));
+                    outputStream.flush();
+                }
+
+                // Get response code
+                int responseCode = connection.getResponseCode();
+                System.out.println("Response Code: " + responseCode);
+
+                // Read response from the server
+                try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                    String inputLine;
+                    StringBuilder response = new StringBuilder();
+                    while ((inputLine = in.readLine()) != null) {
+                        response.append(inputLine);
+                    }
+                    System.out.println("Response: " + response.toString());
+                }
+
+                // Close connection
+                connection.disconnect();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 

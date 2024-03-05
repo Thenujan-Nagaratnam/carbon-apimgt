@@ -58,12 +58,12 @@ public class AIAssistantApiPublisherNotifier extends ApisNotifier{
 
         if (APIConstants.EventType.API_LIFECYCLE_CHANGE.name().equals(event.getType())) {
             if (APIConstants.RETIRED.equals(apiEvent.getApiStatus())){
-                postRequest(apiEvent);
+                deleteRequest(apiEvent);
             } else if (APIConstants.PUBLISHED.equals(apiEvent.getApiStatus())) {
                 postRequest(apiEvent);
             }
         } else if (APIConstants.EventType.API_DELETE.name().equals(event.getType())) {
-            postRequest(apiEvent);
+            deleteRequest(apiEvent);
         }
     }
 
@@ -74,7 +74,6 @@ public class AIAssistantApiPublisherNotifier extends ApisNotifier{
      * @throws NotifierException if error occurs
      */
     private void postRequest(APIEvent apiEvent) throws NotifierException {
-
         apiMgtDAO = ApiMgtDAO.getInstance();
         String apiId = apiEvent.getUuid();
 
@@ -84,38 +83,22 @@ public class AIAssistantApiPublisherNotifier extends ApisNotifier{
             API api = apiProvider.getAPIbyUUID(apiId, apiMgtDAO.getOrganizationByAPIUUID(apiId));
 
             try {
-                URL url = new URL("http://localhost:5000/api");
-
-                // Open a connection
+                URL url = new URL("http://127.0.0.1:8000/add_vector/");
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-                // Set the request method to POST
                 connection.setRequestMethod("POST");
-
-                // Enable output and input streams
                 connection.setDoOutput(true);
                 connection.setDoInput(true);
-
-                // Set request headers
                 connection.setRequestProperty("Content-Type", "application/json");
-
-                // Create JSON data to send
                 JSONObject jsonInput = new JSONObject();
-                jsonInput.put("swagger", api.getSwaggerDefinition());
+                jsonInput.put("api_spec", api.getSwaggerDefinition());
                 jsonInput.put("version", apiEvent.getApiVersion());
                 jsonInput.put("status", apiEvent.getApiStatus());
-
-                // Write JSON data to the connection output stream
                 try (DataOutputStream outputStream = new DataOutputStream(connection.getOutputStream())) {
                     outputStream.writeBytes(String.valueOf(jsonInput));
                     outputStream.flush();
                 }
-
-                // Get response code
                 int responseCode = connection.getResponseCode();
                 System.out.println("Response Code: " + responseCode);
-
-                // Read response from the server
                 try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
                     String inputLine;
                     StringBuilder response = new StringBuilder();
@@ -124,8 +107,6 @@ public class AIAssistantApiPublisherNotifier extends ApisNotifier{
                     }
                     System.out.println("Response: " + response.toString());
                 }
-
-                // Close connection
                 connection.disconnect();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -134,6 +115,40 @@ public class AIAssistantApiPublisherNotifier extends ApisNotifier{
         } catch (APIManagementException e) {
             throw new RuntimeException(e);
         }
+
+    }
+
+    private void deleteRequest(APIEvent apiEvent) throws NotifierException {
+
+        apiMgtDAO = ApiMgtDAO.getInstance();
+
+            try {
+                URL url = new URL("http://127.0.0.1:8000/remove_vector/");
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("DELETE");
+                connection.setDoOutput(true);
+                connection.setDoInput(true);
+                connection.setRequestProperty("Content-Type", "application/json");
+                JSONObject jsonInput = new JSONObject();
+                jsonInput.put("api_title", apiEvent.getApiName());
+                try (DataOutputStream outputStream = new DataOutputStream(connection.getOutputStream())) {
+                    outputStream.writeBytes(String.valueOf(jsonInput));
+                    outputStream.flush();
+                }
+                int responseCode = connection.getResponseCode();
+                System.out.println("Response Code: " + responseCode);
+                try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                    String inputLine;
+                    StringBuilder response = new StringBuilder();
+                    while ((inputLine = in.readLine()) != null) {
+                        response.append(inputLine);
+                    }
+                    System.out.println("Response: " + response.toString());
+                }
+                connection.disconnect();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
     }
 

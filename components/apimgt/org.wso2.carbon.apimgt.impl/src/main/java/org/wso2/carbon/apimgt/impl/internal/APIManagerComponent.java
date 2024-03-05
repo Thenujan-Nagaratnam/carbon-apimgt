@@ -75,6 +75,7 @@ import org.wso2.carbon.apimgt.impl.jwt.JWTValidationServiceImpl;
 import org.wso2.carbon.apimgt.impl.keymgt.KeyManagerConfigurationService;
 import org.wso2.carbon.apimgt.impl.keymgt.KeyManagerConfigurationServiceImpl;
 import org.wso2.carbon.apimgt.impl.notifier.ApisNotifier;
+import org.wso2.carbon.apimgt.impl.notifier.AIAssistantApiPublisherNotifier;
 import org.wso2.carbon.apimgt.impl.notifier.ApplicationNotifier;
 import org.wso2.carbon.apimgt.impl.notifier.ApplicationRegistrationNotifier;
 import org.wso2.carbon.apimgt.impl.notifier.CertificateNotifier;
@@ -204,6 +205,7 @@ public class APIManagerComponent {
             //Registering Notifiers
             bundleContext.registerService(Notifier.class.getName(), new SubscriptionsNotifier(), null);
             bundleContext.registerService(Notifier.class.getName(), new ApisNotifier(), null);
+            bundleContext.registerService(Notifier.class.getName(), new AIAssistantApiPublisherNotifier(), null);
             bundleContext.registerService(Notifier.class.getName(), new ApplicationNotifier(), null);
             bundleContext.registerService(Notifier.class.getName(), new ApplicationRegistrationNotifier(), null);
             bundleContext.registerService(Notifier.class.getName(), new PolicyNotifier(), null);

@@ -3682,6 +3682,71 @@ paths:
             Internal Server Error.
             An error occurred while executing test using API Chat service.
 
+
+  ######################################################
+  # The "API Chat Feature" resource APIs
+  ######################################################
+  '/ai/marketplace-chat/health':
+
+    #-----------------------------------------------------
+    # Check the health status of AI service
+    #-----------------------------------------------------
+    get:
+      summary: Heath check endpoint
+      security:
+        - OAuth2Security: []
+      description: |
+        Get the health status of Marketplace Chat AI service
+      operationId: getMarketplaceChatHealth
+      tags:
+        - Marketplace Chat
+      responses:
+        200:
+          description: |
+            OK.
+            Health status is returned.
+        500:
+          description: |
+            Internal Server Error.
+            An error occurred while checking the health status of API Chat service
+
+  '/ai/marketplace-chat/chat':
+
+    #-----------------------------------------------------
+    # Execute test specified via API Chat
+    #-----------------------------------------------------
+    post:
+      security:
+        - OAuth2Security: []
+      summary: Chat Endpoint
+      description: |
+        Send a single query to the service and get the response.
+      operationId: postMarketplaceChat
+      requestBody:
+        description: |
+          Marketplace Chat execute request payload
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarketplaceChatRequest'
+      tags:
+        - Marketplace Chat
+      responses:
+        201:
+          description: |
+            Created.
+            Marketplace Chat execute response payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiChatExecuteResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          description: |
+            Internal Server Error.
+            An error occurred while executing test using API Chat service.
+
   ######################################################
   # User resource APIs
   ######################################################
@@ -3714,32 +3779,6 @@ paths:
         - lang: Curl
           source: 'curl -k -H "Authorization: Bearer ae4eae22-3f65-387b-a171-d37eaa366fa8"
           -H "Content-Type: application/json" -X POST -d @data.json "https://localhost:9443/api/am/devportal/v3/me/change-password"'
-  /apis/aiSearchAssistant:
-    get:
-      tags:
-        - APIs
-      summary: |-
-        Service for the API developer to find the most suitable API for them.
-        Users can search for APIs using a natural language query. Ask the API to find the most suitable API for you. Also can ask about the API details.
-      operationId: getAisearchassistant
-      parameters:
-        - $ref: '#/components/parameters/nlQuery'
-        - $ref: '#/components/parameters/action'
-      responses:
-        "200":
-          description: Ok
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ChatMessageList'
-        "400":
-          $ref: '#/components/responses/BadRequest'
-        "404":
-          $ref: '#/components/responses/NotFound'
-        "500":
-          $ref: '#/components/responses/InternalServerError'
-      security:
-        - OAuth2Security: [ ]
 components:
   schemas:
     APIList:
@@ -6016,6 +6055,41 @@ components:
           type: string
           description: completion result
           example: "The pet with ID 123 is available. Here are the details: - ID: 123 - Name: asd - Status: available"
+    ChatMessage:
+      required:
+        - content
+        - role
+      type: object
+      properties:
+        role:
+          type: string
+        content:
+          type: string
+    ChatMessageList:
+      required:
+        - messageList
+      type: object
+      properties:
+        messageList:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+    MarketplaceChatRequest:
+      required:
+        - message
+        - messageList
+        - organization
+        - tenantDomain
+      type: object
+      properties:
+        organization:
+          type: string
+        tenantDomain:
+          type: string
+        message:
+          type: string
+        messageList:
+          $ref: '#/components/schemas/ChatMessageList'
   responses:
     BadRequest:
       description: Bad Request. Invalid request or validation error.

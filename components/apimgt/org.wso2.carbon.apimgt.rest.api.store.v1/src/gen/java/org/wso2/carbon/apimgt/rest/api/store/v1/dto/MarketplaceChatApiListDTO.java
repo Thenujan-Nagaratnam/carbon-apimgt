@@ -4,9 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import java.util.ArrayList;
-import java.util.List;
-import org.wso2.carbon.apimgt.rest.api.store.v1.dto.ChatMessageDTO;
 import javax.validation.constraints.*;
 
 
@@ -21,27 +18,45 @@ import javax.validation.Valid;
 
 
 
-public class ChatMessageListDTO   {
+public class MarketplaceChatApiListDTO   {
   
-    private List<ChatMessageDTO> messageList = new ArrayList<ChatMessageDTO>();
+    private String apiId = null;
+    private String apiName = null;
 
   /**
    **/
-  public ChatMessageListDTO messageList(List<ChatMessageDTO> messageList) {
-    this.messageList = messageList;
+  public MarketplaceChatApiListDTO apiId(String apiId) {
+    this.apiId = apiId;
     return this;
   }
 
   
   @ApiModelProperty(required = true, value = "")
-      @Valid
-  @JsonProperty("messageList")
+  @JsonProperty("apiId")
   @NotNull
-  public List<ChatMessageDTO> getMessageList() {
-    return messageList;
+  public String getApiId() {
+    return apiId;
   }
-  public void setMessageList(List<ChatMessageDTO> messageList) {
-    this.messageList = messageList;
+  public void setApiId(String apiId) {
+    this.apiId = apiId;
+  }
+
+  /**
+   **/
+  public MarketplaceChatApiListDTO apiName(String apiName) {
+    this.apiName = apiName;
+    return this;
+  }
+
+  
+  @ApiModelProperty(required = true, value = "")
+  @JsonProperty("apiName")
+  @NotNull
+  public String getApiName() {
+    return apiName;
+  }
+  public void setApiName(String apiName) {
+    this.apiName = apiName;
   }
 
 
@@ -53,21 +68,23 @@ public class ChatMessageListDTO   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ChatMessageListDTO chatMessageList = (ChatMessageListDTO) o;
-    return Objects.equals(messageList, chatMessageList.messageList);
+    MarketplaceChatApiListDTO marketplaceChatApiList = (MarketplaceChatApiListDTO) o;
+    return Objects.equals(apiId, marketplaceChatApiList.apiId) &&
+        Objects.equals(apiName, marketplaceChatApiList.apiName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(messageList);
+    return Objects.hash(apiId, apiName);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ChatMessageListDTO {\n");
+    sb.append("class MarketplaceChatApiListDTO {\n");
     
-    sb.append("    messageList: ").append(toIndentedString(messageList)).append("\n");
+    sb.append("    apiId: ").append(toIndentedString(apiId)).append("\n");
+    sb.append("    apiName: ").append(toIndentedString(apiName)).append("\n");
     sb.append("}");
     return sb.toString();
   }

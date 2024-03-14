@@ -73,4 +73,30 @@ public class AiApiServiceImpl implements AiApiService {
         }
         return null;
     }
+
+    @Override
+    public Response getMarketplaceChatHealth(MessageContext messageContext) throws APIManagementException {
+        try {
+            if (APIUtil.isApiChatEnabled()) {
+                CloseableHttpResponse response = APIUtil.getAIServiceHealth(APIConstants.API_CHAT_ENDPOINT, APIConstants.API_CHAT_AUTH_TOKEN);
+                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                    return Response.ok().build();
+                } else {
+                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+                }
+            }
+        } catch (MalformedURLException e) {
+            String errorMessage = "Malformed URL detected when attempting to perform health check against API Chat service";
+            RestApiUtil.handleInternalServerError(errorMessage, e, log);
+        } catch (APIManagementException e) {
+            String errorMessage = "Error encountered while connecting to the API Chat service";
+            RestApiUtil.handleInternalServerError(errorMessage, e, log);
+        }
+        return null;
+    }
+
+    @Override
+    public Response postMarketplaceChat(MarketplaceChatRequestDTO marketplaceChatRequestDTO, MessageContext messageContext) throws APIManagementException {
+        return null;
+    }
 }

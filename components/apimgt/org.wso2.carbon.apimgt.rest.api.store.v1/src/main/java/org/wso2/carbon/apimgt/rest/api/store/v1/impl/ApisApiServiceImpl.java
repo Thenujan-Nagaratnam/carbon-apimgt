@@ -451,63 +451,6 @@ public class ApisApiServiceImpl implements ApisApiService {
         return null;
     }
 
-    private ChatMessageListDTO chatMessageListDTO = new ChatMessageListDTO();
-
-    @Override
-    public Response getAisearchassistant(String query, String action, MessageContext messageContext) throws APIManagementException {
-        if (action.equals("chat")){
-
-            ChatMessageDTO assistantMessage = new ChatMessageDTO().role("assistant");
-            ChatMessageDTO userMessage = new ChatMessageDTO().role("user");
-
-            assistantMessage.setContent("Hi there! I'm Chatbot UI, an AI assistant. I can help you with things like answering questions, providing information, and helping with tasks. How can I help you?");
-            userMessage.setContent(query);
-
-            List<ChatMessageDTO> messages = chatMessageListDTO.getMessages();
-
-            messages.add(userMessage);
-            messages.add(assistantMessage);
-
-            chatMessageListDTO.setMessages(messages);
-
-            return Response.ok().entity(chatMessageListDTO).build();
-
-        } else if (action.equals("clearChat")){
-            ChatMessageDTO assistantMessage = new ChatMessageDTO().role("assistant");
-            assistantMessage.setContent("Hi there! I'm Chatbot UI, an AI assistant. I can help you with things like answering questions, providing information, and helping with tasks. How can I help you?");
-
-            List<ChatMessageDTO> messages = chatMessageListDTO.getMessages();
-
-            messages.clear();
-
-            messages.add(assistantMessage);
-
-            chatMessageListDTO.setMessages(messages);
-            return Response.ok().entity(chatMessageListDTO).build();
-
-        } else if (action.equals("getChatHistory")){
-
-            List<ChatMessageDTO> messages = chatMessageListDTO.getMessages();
-            ChatMessageDTO assistantMessage = new ChatMessageDTO().role("assistant");
-            assistantMessage.setContent("Hi there! I'm Chatbot UI, an AI assistant. I can help you with things like answering questions, providing information, and helping with tasks. How can I help you?");
-
-            if (messages.isEmpty()) {
-                messages.add(assistantMessage);
-            }
-
-            chatMessageListDTO.setMessages(messages);
-
-            return Response.ok().entity(chatMessageListDTO).build();
-        } else {
-            ErrorDTO errorObject = new ErrorDTO();
-            Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
-            errorObject.setCode((long) status.getStatusCode());
-            errorObject.setMessage(status.toString());
-            errorObject.setDescription("INVALID ACTION");
-            return Response.status(status).entity(errorObject).build();
-        }
-    }
-
     @Override
     public Response deleteComment(String commentId, String apiId, String ifMatch, MessageContext messageContext)
             throws APIManagementException {

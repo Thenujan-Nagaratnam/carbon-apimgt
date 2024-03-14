@@ -3684,7 +3684,7 @@ paths:
 
 
   ######################################################
-  # The "API Chat Feature" resource APIs
+  # The "Marketplace Chat Feature" resource APIs
   ######################################################
   '/ai/marketplace-chat/health':
 
@@ -3739,7 +3739,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiChatExecuteResponse'
+                $ref: '#/components/schemas/MarketplaceChatResponse'
         400:
           $ref: '#/components/responses/BadRequest'
         500:
@@ -6090,6 +6090,28 @@ components:
           type: string
         messageList:
           $ref: '#/components/schemas/ChatMessageList'
+    MarketplaceChatApiList:
+      required:
+        - apiId
+        - apiName
+      type: object
+      properties:
+        apiId:
+          type: string
+        apiName:
+          type: string
+    MarketplaceChatResponse:
+      required:
+        - apis
+        - response
+      type: object
+      properties:
+        response:
+          type: string
+        apis:
+          type: array
+          items:
+            $ref: '#/components/schemas/MarketplaceChatApiList'
   responses:
     BadRequest:
       description: Bad Request. Invalid request or validation error.

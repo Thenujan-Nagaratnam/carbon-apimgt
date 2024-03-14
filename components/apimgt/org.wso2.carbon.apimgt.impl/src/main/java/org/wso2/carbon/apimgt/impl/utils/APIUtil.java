@@ -59,6 +59,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
@@ -377,6 +378,7 @@ public final class APIUtil {
     private static long retrievalTimeout;
     private static final long maxRetrievalTimeout = 1000 * 60 * 60;
     private static double retryProgressionFactor;
+    private static String gatewayTypes;
     private static int maxRetryCount;
 
     //constants for getting masked token
@@ -404,6 +406,7 @@ public final class APIUtil {
         maxRetryCount = apiManagerConfiguration.getGatewayArtifactSynchronizerProperties().getMaxRetryCount();
         retryProgressionFactor = apiManagerConfiguration.getGatewayArtifactSynchronizerProperties()
                 .getRetryProgressionFactor();
+        gatewayTypes = apiManagerConfiguration.getFirstProperty(APIConstants.API_GATEWAY_TYPE);
         try {
             eventPublisherFactory = ServiceReferenceHolder.getInstance().getEventPublisherFactory();
             eventPublishers.putIfAbsent(EventPublisherType.ASYNC_WEBHOOKS,
@@ -2746,6 +2749,57 @@ public final class APIUtil {
     }
 
     /**
+     * This method is used to validate character length of crucial api params.
+     *
+     * @param apiName    Name of the API
+     * @param apiVersion Version of the API
+     * @param context    API Context of the API
+     * @param provider   Provider of the API
+     * @throws APIManagementException If the params length exceeds the allowed length
+     */
+    public static void validateCharacterLengthOfAPIParams(String apiName, String apiVersion, String context,
+                                                          String provider) throws APIManagementException {
+
+        validateCharacterLengthOfAPIParams(apiName, context, provider);
+        if (!hasValidLength(apiVersion, APIConstants.MAX_LENGTH_VERSION)) {
+            throw new APIManagementException("API version exceeds allowed character length",
+                    ExceptionCodes.LENGTH_EXCEEDS);
+        }
+    }
+
+    /**
+     * This method is used to validate character length of crucial api product params.
+     *
+     * @param apiName  Name of the API
+     * @param context  API Context of the API
+     * @param provider Provider of the API
+     * @throws APIManagementException If the params length exceeds the allowed length
+     */
+    public static void validateCharacterLengthOfAPIParams(String apiName, String context, String provider)
+            throws APIManagementException {
+
+        if (!hasValidLength(apiName, APIConstants.MAX_LENGTH_API_NAME)) {
+            throw new APIManagementException("API name exceeds allowed character length",
+                    ExceptionCodes.LENGTH_EXCEEDS);
+        }
+        if (!hasValidLength(context, APIConstants.MAX_LENGTH_CONTEXT)) {
+            throw new APIManagementException("API context exceeds allowed character length",
+                    ExceptionCodes.LENGTH_EXCEEDS);
+        }
+        if (!hasValidLength(provider, APIConstants.MAX_LENGTH_PROVIDER)) {
+            throw new APIManagementException("API provider name exceeds allowed character length",
+                    ExceptionCodes.LENGTH_EXCEEDS);
+        }
+    }
+
+    /**
+     * This method is used to validate character length.
+     */
+    public static boolean hasValidLength(String value, int maxLength) {
+        return value != null && value.length() <= maxLength;
+    }
+
+    /**
      * When an input is having '-AT-',replace it with @ [This is required to persist API data between registry and database]
      *
      * @param input inputString
@@ -3165,6 +3219,15 @@ public final class APIUtil {
     public static boolean isAnalyticsEnabled() {
 
         return APIManagerAnalyticsConfiguration.getInstance().isAnalyticsEnabled();
+    }
+
+    public static List<String> getGatewayTypes () {
+        // Get the gateway types from the deployment.toml
+        List<String> gatewayTypesList = new ArrayList<>();
+        if (gatewayTypes != null && !gatewayTypes.isEmpty()) {
+            gatewayTypesList = Arrays.asList(gatewayTypes.split(","));
+        }
+        return gatewayTypesList;
     }
 
     /**
@@ -6790,11 +6853,13 @@ public final class APIUtil {
         jsonObject.put("typ", entityType);
         jsonObject.put("action", action);
         jsonObject.put("performedBy", performedBy);
-        try {
-            JSONObject entityInfoJson = (JSONObject) new JSONParser().parse(entityInfo);
-            jsonObject.put("info", entityInfoJson);
-        } catch (ParseException ignored) { // if entityInfo cannot be parsed as json, log as a simple string
-            jsonObject.put("info", entityInfo);
+        if (entityInfo != null && !StringUtils.isBlank(entityInfo)) {
+            try {
+                JSONObject entityInfoJson = (JSONObject) new JSONParser().parse(entityInfo);
+                jsonObject.put("info", entityInfoJson);
+            } catch (ParseException ignored) { // if entityInfo cannot be parsed as json, log as a simple string
+                jsonObject.put("info", entityInfo);
+            }
         }
         audit.info(StringEscapeUtils.unescapeJava(jsonObject.toString()));
     }
@@ -7366,11 +7431,23 @@ public final class APIUtil {
     public static KeyManagerConfiguration toKeyManagerConfiguration(String base64EncodedString)
             throws APIManagementException {
 
-        KeyManagerConfiguration keyManagerConfiguration = new KeyManagerConfiguration();
         String decodedString = new String(Base64.decodeBase64(base64EncodedString));
-        new Gson().fromJson(decodedString, Map.class);
-        Map configuration = new Gson().fromJson(decodedString, Map.class);
-        keyManagerConfiguration.setConfiguration(configuration);
+        KeyManagerConfigurationDTO keyManagerConfigurationDTO = new Gson().fromJson(decodedString,
+                KeyManagerConfigurationDTO.class);
+        return toKeyManagerConfiguration(keyManagerConfigurationDTO);
+    }
+
+    public static KeyManagerConfiguration toKeyManagerConfiguration(KeyManagerConfigurationDTO keyManagerConfigurationDTO)
+    {
+
+        KeyManagerConfiguration keyManagerConfiguration = new KeyManagerConfiguration();
+        keyManagerConfiguration.setName(keyManagerConfigurationDTO.getName());
+        keyManagerConfiguration.setConfiguration(keyManagerConfigurationDTO.getAdditionalProperties());
+        keyManagerConfiguration.setTenantDomain(keyManagerConfigurationDTO.getOrganization());
+        keyManagerConfiguration.setTokenType(KeyManagerConfiguration.TokenType.valueOf(keyManagerConfigurationDTO
+                .getTokenType().toUpperCase()));
+        keyManagerConfiguration.setEnabled(keyManagerConfigurationDTO.isEnabled());
+        keyManagerConfiguration.setType(keyManagerConfigurationDTO.getType());
         return keyManagerConfiguration;
     }
 
@@ -9153,7 +9230,14 @@ public final class APIUtil {
         return content.trim();
     }
 
-    public static X509Certificate retrieveCertificateFromContent(String base64EncodedCertificate)
+    /**
+     * Util method to convert Base64 URL encoded certificate content to X509Certificate instance.
+     *
+     * @param base64EncodedCertificate Base64 URL encoded cert string
+     * @return javax.security.cert.X509Certificate
+     * @throws APIManagementException if an error occurs while retrieving from IDP
+     */
+    public static X509Certificate retrieveCertificateFromURLEncodedContent(String base64EncodedCertificate)
             throws APIManagementException {
 
         if (base64EncodedCertificate != null) {
@@ -9166,6 +9250,30 @@ public final class APIUtil {
 
             base64EncodedCertificate = APIUtil.getX509certificateContent(base64EncodedCertificate);
             byte[] bytes = Base64.decodeBase64(base64EncodedCertificate);
+            try (InputStream inputStream = new ByteArrayInputStream(bytes)) {
+                return X509Certificate.getInstance(inputStream);
+            } catch (IOException | javax.security.cert.CertificateException e) {
+                String msg = "Error while converting into X509Certificate";
+                log.error(msg, e);
+                throw new APIManagementException(msg, e);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Util method to convert non URL encoded but base64 encoded certificate content to X509Certificate instance.
+     *
+     * @param base64EncodedCertificate Base64 encoded cert string (not URL encoded)
+     * @return javax.security.cert.X509Certificate
+     * @throws APIManagementException if an error occurs while retrieving from IDP
+     */
+    public static X509Certificate retrieveCertificateFromContent(String base64EncodedCertificate)
+            throws APIManagementException {
+
+        if (base64EncodedCertificate != null) {
+            base64EncodedCertificate = APIUtil.getX509certificateContent(base64EncodedCertificate);
+            byte[] bytes = Base64.decodeBase64(base64EncodedCertificate.getBytes());
             try (InputStream inputStream = new ByteArrayInputStream(bytes)) {
                 return X509Certificate.getInstance(inputStream);
             } catch (IOException | javax.security.cert.CertificateException e) {
@@ -10040,15 +10148,15 @@ public final class APIUtil {
     }
 
     /**
-     * Handles gateway vendor for Choreo Connect before insert DB operations.
+     * Handles gateway vendor for APK before insert DB operations.
      *
      * @param gatewayVendorType Gateway vendor
      * @param gatewayType       Gateway type
      * @return gateway vendor for the API
      */
     public static String setGatewayVendorBeforeInsertion(String gatewayVendorType, String gatewayType) {
-        if(gatewayType != null && APIConstants.WSO2_CHOREO_CONNECT_GATEWAY.equals(gatewayType)) {
-            gatewayVendorType =  APIConstants.WSO2_CHOREO_CONNECT_GATEWAY;
+        if (gatewayType != null && APIConstants.WSO2_APK_GATEWAY.equals(gatewayType)) {
+            gatewayVendorType =  APIConstants.WSO2_APK_GATEWAY;
         }
         return gatewayVendorType;
     }
@@ -10063,20 +10171,20 @@ public final class APIUtil {
         String gatewayType = null;
         if (APIConstants.WSO2_GATEWAY_ENVIRONMENT.equals(gatewayVendor)) {
             gatewayType = APIConstants.WSO2_SYNAPSE_GATEWAY;
-        } else if (APIConstants.WSO2_CHOREO_CONNECT_GATEWAY.equals(gatewayVendor)) {
-            gatewayType = APIConstants.WSO2_CHOREO_CONNECT_GATEWAY;
+        } else if (APIConstants.WSO2_APK_GATEWAY.equals(gatewayVendor)) {
+            gatewayType = APIConstants.WSO2_APK_GATEWAY;
         }
         return gatewayType;
     }
 
     /**
-     * Replaces wso2/choreo-connect gateway vendor type as wso2 after retrieving from db.
+     * Replaces wso2/apk gateway vendor type as wso2 after retrieving from db.
      *
      * @param gatewayVendor Gateway vendor type
      * @return wso2 gateway vendor type
      */
     public static String handleGatewayVendorRetrieval(String gatewayVendor) {
-        if (APIConstants.WSO2_CHOREO_CONNECT_GATEWAY.equals(gatewayVendor)) {
+        if (APIConstants.WSO2_APK_GATEWAY.equals(gatewayVendor)) {
             gatewayVendor = APIConstants.WSO2_GATEWAY_ENVIRONMENT;
         }
         return  gatewayVendor;
@@ -10234,4 +10342,70 @@ public final class APIUtil {
         }
         return null;
     }
+
+    /**
+     * Get aggregated string from set of scopes
+     *
+     * @param scopes set of scopes
+     * @return scopes string
+     */
+    public static String getScopesAsString(Set<Scope> scopes) {
+        StringBuilder scopesStringBuilder = new StringBuilder();
+        for (Scope scope : scopes) {
+            scopesStringBuilder.append(scope.getKey()).append(" ");
+        }
+        return scopesStringBuilder.toString().trim();
+    }
+
+    /**
+     * Check whether API Chat feature is enabled
+     *
+     * @return returns true if API Chat feature is enabled, false if disabled.
+     */
+    public static boolean isApiChatEnabled() {
+
+        APIManagerConfiguration config = ServiceReferenceHolder.getInstance().
+                getAPIManagerConfigurationService().getAPIManagerConfiguration();
+        String isApiChatEnabled = config.getFirstProperty(APIConstants.API_CHAT_ENABLED);
+        if (isApiChatEnabled == null) {
+            return false;
+        }
+
+        return Boolean.parseBoolean(isApiChatEnabled);
+    }
+
+    /**
+     * This method is used for AI Service calls related to API-Chat feature and Marketplace-Assistant feature
+     *
+     * @param endpointConfigName Config name to retrieve the AI Service URL
+     * @param authTokenConfigName Config name to retrieve the token for authentication purposes
+     * @return CloseableHttpResponse
+     * @throws APIManagementException
+     */
+    public static CloseableHttpResponse getAIServiceHealth(String endpointConfigName, String authTokenConfigName)
+            throws APIManagementException, MalformedURLException {
+
+        APIManagerConfiguration config = ServiceReferenceHolder.getInstance().
+                getAPIManagerConfigurationService().getAPIManagerConfiguration();
+        String endpoint = config.getFirstProperty(endpointConfigName);
+        String authToken = config.getFirstProperty(authTokenConfigName);
+
+        HttpGet healthGet = new HttpGet(endpoint + "/health");
+        healthGet.setHeader("auth-key", authToken);
+
+        URL url = new URL(endpoint);
+        int port = url.getPort();
+        String protocol = url.getProtocol();
+        HttpClient httpClient = APIUtil.getHttpClient(port, protocol);
+
+        try {
+            return executeHTTPRequest(healthGet, httpClient);
+        } catch (APIManagementException | IOException e) {
+            throw new APIManagementException("Error encountered while connecting to service", e);
+        }
+    }
+
+//    public static CloseableHttpResponse invokeAIService(String endpointConfigName, String authTokenConfigName) {
+//
+//    }
 }

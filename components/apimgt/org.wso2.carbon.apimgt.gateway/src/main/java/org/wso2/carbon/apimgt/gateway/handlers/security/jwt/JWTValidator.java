@@ -62,6 +62,7 @@ import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 
 import java.security.cert.Certificate;
+import java.text.ParseException;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
@@ -177,7 +178,48 @@ public class JWTValidator {
                         "Invalid JWT token");
             }
         }
-
+        Object authorizedPartyClaim = signedJWTInfo.getJwtClaimsSet().getClaim(APIMgtGatewayConstants.AZP_JWT_CLAIM);
+        Object entityIdClaim = signedJWTInfo.getJwtClaimsSet().getClaim(APIMgtGatewayConstants.ENTITY_ID_JWT_CLAIM);
+        long jwtGeneratedTime = 0;
+        try {
+            jwtGeneratedTime = signedJWTInfo.getSignedJWT().getJWTClaimsSet().getIssueTime().getTime();
+        } catch (ParseException e) {
+            log.error("Error while obtaining JWT token generated time " + GatewayUtils.getMaskedToken(jwtHeader));
+        }
+        if (jwtGeneratedTime != 0 && authorizedPartyClaim != null && entityIdClaim != null) {
+            String authorizedParty = (String) authorizedPartyClaim;
+            String entityId = (String) entityIdClaim;
+            if (RevokedJWTDataHolder.getInstance().isRevokedConsumerKeyExists(authorizedParty, jwtGeneratedTime)) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Consumer key retrieved from the  jwt token map is in revoked consumer key map."
+                            + " Token: " + GatewayUtils.getMaskedToken(jwtHeader));
+                }
+                log.error("Invalid JWT token. " + GatewayUtils.getMaskedToken(jwtHeader));
+                throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
+                        "Invalid JWT token");
+            }
+            if (StringUtils.equals(entityId, authorizedParty)
+                    && RevokedJWTDataHolder.getInstance().isRevokedSubjectEntityConsumerAppExists(
+                            entityId, jwtGeneratedTime)) {
+                // handle user event revocations of app tokens since the 'sub' claim is client id
+                if (log.isDebugEnabled()) {
+                    log.debug("Consumer key retrieved from the  jwt token map is in revoked consumer key map."
+                            + " Token: " + GatewayUtils.getMaskedToken(jwtHeader));
+                }
+                log.error("Invalid JWT token. " + GatewayUtils.getMaskedToken(jwtHeader));
+                throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS, "Invalid JWT token");
+            }
+            if (!StringUtils.equals(entityId, authorizedParty) && RevokedJWTDataHolder.getInstance()
+                    .isRevokedSubjectEntityUserExists(entityId, jwtGeneratedTime)) {
+                if (log.isDebugEnabled()) {
+                    log.debug("User id retrieved from the  jwt token map is in revoked user id map."
+                            + " Token: " + GatewayUtils.getMaskedToken(jwtHeader));
+                }
+                log.error("Invalid JWT token. " + GatewayUtils.getMaskedToken(jwtHeader));
+                throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
+                        "Invalid JWT token");
+            }
+        }
         JWTValidationInfo jwtValidationInfo = getJwtValidationInfo(signedJWTInfo, jwtTokenIdentifier);
 
         if (jwtValidationInfo != null) {
@@ -207,6 +249,7 @@ public class JWTValidator {
                 // Validate scopes
                 validateScopes(apiContext, apiVersion, matchingResource, httpMethod, jwtValidationInfo, signedJWTInfo);
                 synCtx.setProperty(APIMgtGatewayConstants.SCOPES, jwtValidationInfo.getScopes().toString());
+                synCtx.setProperty(APIMgtGatewayConstants.JWT_CLAIMS, jwtValidationInfo.getClaims());
                 if (apiKeyValidationInfoDTO.isAuthorized()) {
                     /*
                      * Set api.ut.apiPublisher of the subscribed api to the message context.
@@ -627,7 +670,7 @@ public class JWTValidator {
         return payload;
     }
 
-    private boolean isValidCertificateBoundAccessToken(SignedJWTInfo signedJWTInfo) { //Holder of Key token
+    private boolean isValidCertificateBoundAccessToken(SignedJWTInfo signedJWTInfo) throws ParseException { //Holder of Key token
 
         if (signedJWTInfo.getClientCertificate() == null ||
                 StringUtils.isEmpty(signedJWTInfo.getClientCertificateHash()) ||
@@ -658,8 +701,14 @@ public class JWTValidator {
                     checkTokenExpiration(jti, tempJWTValidationInfo, tenantDomain);
                                         /* Only when cnf validation fails the validation info is updated when it passes the other
                      validations are performed */
-                    if (!isValidCertificateBoundAccessToken(signedJWTInfo)) {
-                        tempJWTValidationInfo.setValid(false);
+                    try {
+                        if (!isValidCertificateBoundAccessToken(signedJWTInfo)) {
+                            tempJWTValidationInfo.setValid(false);
+                        }
+                    } catch (ParseException e) {
+                        log.error("Error while parsing the certificate thumbprint", e);
+                        throw new APISecurityException(APISecurityConstants.API_AUTH_GENERAL_ERROR,
+                                APISecurityConstants.API_AUTH_GENERAL_ERROR_MESSAGE, e);
                     }
                     jwtValidationInfo = tempJWTValidationInfo;
                 }

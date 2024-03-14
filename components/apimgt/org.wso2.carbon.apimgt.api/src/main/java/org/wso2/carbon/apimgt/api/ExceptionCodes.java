@@ -500,6 +500,7 @@ public enum ExceptionCodes implements ErrorHandler {
     LOGGING_API_NOT_FOUND(901400, "Requested Resource Not Found", 404, "Request API Not Found for context: %s"),
     LOGGING_API_INCORRECT_LOG_LEVEL(901401, "Bad Request", 400, "Log level should be either OFF, BASIC, STANDARD or FULL"),
     LOGGING_API_MISSING_DATA(901402, "Missing data", 400, "API context or log level is missing"),
+    LOGGING_API_RESOURCE_NOT_FOUND(901403, "Requested Resource Not Found", 404, "Requested API Resource Not Found"),
     CORRELATION_CONFIG_BAD_REQUEST(902020, "Bad Request", 400, "Request body can not have empty elements"),
     CORRELATION_CONFIG_BAD_REQUEST_INVALID_NAME(902021, "Bad Request", 400, "Request body contains invalid correlation component name"),
     //Service Catalog related error codes
@@ -541,9 +542,13 @@ public enum ExceptionCodes implements ErrorHandler {
     REVISION_ALREADY_DEPLOYED(902005, "Revision deployment state conflicted", 409,
             "Revision deployment request conflicted with the current deployment state of the revision %s. Please try again later", false),
     INVALID_API_ID(902006, "Invalid API ID", 404, "The provided API ID is not found %s", false),
+    INVALID_GATEWAY_TYPE(902007, "Invalid Gateway Type", 400, "Invalid Gateway Type. %s", false),
     INVALID_ENDPOINT_CONFIG(902012, "Endpoint config value(s) is(are) not valid", 400, "Endpoint config value(s) is(are) not valid"),
+    ARTIFACT_SYNC_HTTP_REQUEST_FAILED(903009, "Error while retrieving from remote endpoint", 500, "Error while executing HTTP request to retrieve from remote endpoint"),
     KEY_MANAGER_RESTRICTED_FOR_USER(902013, "Unauthorized Access to Key Manager", 403, "Key Manager is Restricted for this user"),
-    ARTIFACT_SYNC_HTTP_REQUEST_FAILED(903009, "Error while retrieving from remote endpoint", 500, "Error while executing HTTP request to retrieve from remote endpoint");
+    // Admin portal get apis and api provider change related errors
+    CHANGE_API_PROVIDER_FAILED(903011, "Error while changing the API provider", 500, "Error while changing the API provider in the registry or DB"),
+    GET_SEARCH_APIS_IN_ADMIN_FAILED(903012, "Error while getting the apis", 500, "Error while getting/searching the apis from registry");
 
     private final long errorCode;
     private final String errorMessage;

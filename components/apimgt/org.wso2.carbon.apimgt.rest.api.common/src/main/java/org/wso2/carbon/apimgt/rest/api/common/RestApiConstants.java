@@ -203,6 +203,7 @@ public final class RestApiConstants {
     public static final String ORG_ID = "ORG_ID";
 
     public static final int PAGINATION_LIMIT_DEFAULT = 25;
+    public static final String PIZZASHACK_SEARCH_QUERY = "name:PizzaShackAPI version:1.0 context:pizzashack";
     public static final int PAGINATION_OFFSET_DEFAULT = 0;
     public static final String PAGINATION_NEXT_OFFSET = "next_offset";
     public static final String PAGINATION_NEXT_LIMIT = "next_limit";
@@ -320,6 +321,7 @@ public final class RestApiConstants {
 
     public static final String OAS_VERSION_2 = "v2";
     public static final String OAS_VERSION_3 = "v3";
+    public static final String OAS_VERSION_31 = "v31";
 
     public static final String MESSAGE_EXCHANGE_TOKEN_INFO = "message_exchange_token_info";
 

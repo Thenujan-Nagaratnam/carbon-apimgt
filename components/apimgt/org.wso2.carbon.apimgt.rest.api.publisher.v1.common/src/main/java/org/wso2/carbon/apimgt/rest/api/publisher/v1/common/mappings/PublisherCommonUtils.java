@@ -21,9 +21,6 @@ package org.wso2.carbon.apimgt.rest.api.publisher.v1.common.mappings;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import graphql.language.FieldDefinition;
-import graphql.language.ObjectTypeDefinition;
-import graphql.language.TypeDefinition;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
@@ -392,6 +389,7 @@ public class PublisherCommonUtils {
                 }
 
                 apiToUpdate.setUriTemplates(uriTemplates);
+                apiToUpdate.setSwaggerDefinition(newDefinition);
             }
         } else {
             String oldDefinition = apiProvider
@@ -399,6 +397,7 @@ public class PublisherCommonUtils {
             AsyncApiParser asyncApiParser = new AsyncApiParser();
             String updateAsyncAPIDefinition = asyncApiParser.updateAsyncAPIDefinition(oldDefinition, apiToUpdate);
             apiProvider.saveAsyncApiDefinition(originalAPI, updateAsyncAPIDefinition);
+            apiToUpdate.setSwaggerDefinition(updateAsyncAPIDefinition);
         }
         apiToUpdate.setWsdlUrl(apiDtoToUpdate.getWsdlUrl());
         apiToUpdate.setGatewayType(apiDtoToUpdate.getGatewayType());
@@ -847,11 +846,8 @@ public class PublisherCommonUtils {
     public static API addAPIWithGeneratedSwaggerDefinition(APIDTO apiDto, String oasVersion, String username,
                                                            String organization)
             throws APIManagementException, CryptoException {
-        if (APIUtil.isOnPremResolver()) {
-            String name = apiDto.getName();
-            //replace all white spaces in the API Name
-            apiDto.setName(name.replaceAll("\\s+", ""));
-        }
+        String name = apiDto.getName();
+        apiDto.setName(name.trim().replaceAll("\\s{2,}", " "));
         if (APIDTO.TypeEnum.ASYNC.equals(apiDto.getType())) {
             throw new APIManagementException("ASYNC API type does not support API creation from scratch",
                     ExceptionCodes.API_CREATION_NOT_SUPPORTED_FOR_ASYNC_TYPE_APIS);
@@ -881,6 +877,15 @@ public class PublisherCommonUtils {
         if (!PublisherCommonUtils.validateEndpoints(apiDto)) {
             throw new APIManagementException("Invalid/Malformed endpoint URL(s) detected",
                     ExceptionCodes.INVALID_ENDPOINT_URL);
+        }
+
+        // validate gateway type before proceeding
+        String gatewayType = apiDto.getGatewayType();
+        if (APIConstants.WSO2_APK_GATEWAY.equals(gatewayType)) {
+            if (!(APIDTO.TypeEnum.HTTP.equals(apiDto.getType()) || APIDTO.TypeEnum.GRAPHQL.equals(apiDto.getType()))) {
+                throw new APIManagementException("APIs of type " + apiDto.getType() + " are not supported with " +
+                        "WSO2 APK", ExceptionCodes.INVALID_GATEWAY_TYPE);
+            }
         }
 
         Map endpointConfig = (Map) apiDto.getEndpointConfig();
@@ -929,6 +934,8 @@ public class PublisherCommonUtils {
             APIDefinition oasParser;
             if (RestApiConstants.OAS_VERSION_2.equalsIgnoreCase(oasVersion)) {
                 oasParser = new OAS2Parser();
+            } else if (RestApiConstants.OAS_VERSION_31.equalsIgnoreCase(oasVersion)) {
+                oasParser = new OAS3Parser(RestApiConstants.OAS_VERSION_31);
             } else {
                 oasParser = new OAS3Parser();
             }
@@ -1596,9 +1603,12 @@ public class PublisherCommonUtils {
 
         String tenantDomain = RestApiCommonUtil.getLoggedInUserTenantDomain();
         int tenantId = APIUtil.getTenantIdFromTenantDomain(tenantDomain);
+        GraphQLSchemaDefinition graphql = new GraphQLSchemaDefinition();
+        List<URITemplate> operationList = graphql.extractGraphQLOperationList(schemaDefinition);
+        List<APIOperationsDTO> operationArray = APIMappingUtil
+                .fromURITemplateListToOprationList(operationList);
         List<APIOperationsDTO> operationListWithOldData = APIMappingUtil
-                .getOperationListWithOldData(originalAPI.getUriTemplates(),
-                        extractGraphQLOperationList(schemaDefinition), tenantId);
+                .getOperationListWithOldData(originalAPI.getUriTemplates(), operationArray, tenantId);
 
         Set<URITemplate> uriTemplates = APIMappingUtil.getURITemplates(originalAPI, operationListWithOldData);
         originalAPI.setUriTemplates(uriTemplates);
@@ -1607,33 +1617,6 @@ public class PublisherCommonUtils {
         apiProvider.updateAPI(originalAPI, oldApi);
 
         return originalAPI;
-    }
-
-    /**
-     * Extract GraphQL Operations from given schema.
-     *
-     * @param schema graphQL Schema
-     * @return the arrayList of APIOperationsDTOextractGraphQLOperationList
-     */
-    public static List<APIOperationsDTO> extractGraphQLOperationList(String schema) {
-
-        List<APIOperationsDTO> operationArray = new ArrayList<>();
-        SchemaParser schemaParser = new SchemaParser();
-        TypeDefinitionRegistry typeRegistry = schemaParser.parse(schema);
-        Map<java.lang.String, TypeDefinition> operationList = typeRegistry.types();
-        for (Map.Entry<String, TypeDefinition> entry : operationList.entrySet()) {
-            if (entry.getValue().getName().equals(APIConstants.GRAPHQL_QUERY) || entry.getValue().getName()
-                    .equals(APIConstants.GRAPHQL_MUTATION) || entry.getValue().getName()
-                    .equals(APIConstants.GRAPHQL_SUBSCRIPTION)) {
-                for (FieldDefinition fieldDef : ((ObjectTypeDefinition) entry.getValue()).getFieldDefinitions()) {
-                    APIOperationsDTO operation = new APIOperationsDTO();
-                    operation.setVerb(entry.getKey());
-                    operation.setTarget(fieldDef.getName());
-                    operationArray.add(operation);
-                }
-            }
-        }
-        return operationArray;
     }
 
     /**
@@ -1914,6 +1897,9 @@ public class PublisherCommonUtils {
             // Set username in case provider is null or empty
             provider = username;
         }
+        // validate character length
+        APIUtil.validateCharacterLengthOfAPIParams(apiProductDTO.getName(), apiProductDTO.getContext(),
+                provider);
 
         List<String> tiersFromDTO = apiProductDTO.getPolicies();
         Set<Tier> definedTiers = apiProvider.getTiers();

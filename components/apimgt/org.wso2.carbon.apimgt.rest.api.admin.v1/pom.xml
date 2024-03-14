@@ -20,7 +20,7 @@
     <parent>
         <groupId>org.wso2.carbon.apimgt</groupId>
         <artifactId>apimgt</artifactId>
-        <version>9.28.221</version>
+        <version>9.29.51-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -124,6 +124,10 @@
             <groupId>org.apache.felix</groupId>
             <artifactId>org.osgi.foundation</artifactId>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
         </dependency>
     </dependencies>
     <build>

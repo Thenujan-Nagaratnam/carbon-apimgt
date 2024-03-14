@@ -3,7 +3,7 @@
     <parent>
         <artifactId>apimgt</artifactId>
         <groupId>org.wso2.carbon.apimgt</groupId>
-        <version>9.28.221</version>
+        <version>9.29.51-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -66,7 +66,7 @@
                 <configuration>
                     <systemProperties />
                     <classpathDependencyExcludes>
-                        <classpathDependencyExclude>org.ops4j.pax.logging</classpathDependencyExclude>
+                        <classpathDependencyExclude>org.wso2.org.ops4j.pax.logging</classpathDependencyExclude>
                     </classpathDependencyExcludes>
                     <argLine>
                         --add-opens java.base/java.lang=ALL-UNNAMED 

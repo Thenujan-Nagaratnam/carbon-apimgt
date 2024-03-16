@@ -17,6 +17,8 @@ import org.wso2.carbon.apimgt.rest.api.store.v1.dto.ErrorDTO;
 import org.wso2.carbon.apimgt.rest.api.store.v1.dto.MarketplaceChatRequestDTO;
 import org.wso2.carbon.apimgt.rest.api.store.v1.dto.MarketplaceChatResponseDTO;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.List;
 
 import java.io.InputStream;
@@ -30,5 +32,5 @@ public interface AiApiService {
       public Response apiChatPrepare(ApiChatPreparationRequestDTO apiChatPreparationRequestDTO, String apiChatRequestId, MessageContext messageContext) throws APIManagementException;
       public Response getApiChatHealth(MessageContext messageContext) throws APIManagementException;
       public Response getMarketplaceChatHealth(MessageContext messageContext) throws APIManagementException;
-      public Response postMarketplaceChat(MarketplaceChatRequestDTO marketplaceChatRequestDTO, MessageContext messageContext) throws APIManagementException;
+      public Response postMarketplaceChat(MarketplaceChatRequestDTO marketplaceChatRequestDTO, MessageContext messageContext) throws APIManagementException, IOException;
 }

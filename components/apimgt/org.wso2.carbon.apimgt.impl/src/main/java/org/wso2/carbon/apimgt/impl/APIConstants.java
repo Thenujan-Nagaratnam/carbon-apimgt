@@ -506,6 +506,10 @@ public final class APIConstants {
     public static final String API_CHAT_ENABLED = API_CHAT + "Enabled";
     public static final String API_CHAT_AUTH_TOKEN = API_CHAT + "AuthToken";
     public static final String API_CHAT_ENDPOINT = API_CHAT + "Endpoint";
+    public static final String MARKETPLACE_ASSISTANT =  "MarketplaceAssistant.";
+    public static final String MARKETPLACE_ASSISTANT_ENABLED = MARKETPLACE_ASSISTANT + "Enabled";
+    public static final String MARKETPLACE_ASSISTANT_AUTH_TOKEN = MARKETPLACE_ASSISTANT + "AuthToken";
+    public static final String MARKETPLACE_ASSISTANT_ENDPOINT = MARKETPLACE_ASSISTANT + "Endpoint";
 
     //documentation rxt
 

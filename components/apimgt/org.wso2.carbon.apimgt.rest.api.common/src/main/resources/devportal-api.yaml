@@ -3676,6 +3676,78 @@ paths:
             An error occurred while executing test using API Chat service.
 
   ######################################################
+  # The "Marketplace Chat Feature" resource APIs
+  ######################################################
+  '/ai/marketplace-chat/api-count':
+
+    #-----------------------------------------------------
+    # Get No of apis in the VectorDB
+    #-----------------------------------------------------
+    get:
+      summary: API Count endpoint
+      security:
+        - OAuth2Security: []
+      description: |
+        Get the api count of Marketplace Chat AI service
+      operationId: getMarketplaceChatApiCount
+      tags:
+        - Marketplace Chat
+      responses:
+        200:
+          description: |
+            OK.
+            Api Count is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketplaceChatApiCountResponse'
+        500:
+          description: |
+            Internal Server Error.
+            An error occurred while checking the health status of API Chat service
+
+  '/ai/marketplace-chat/chat':
+
+    #-----------------------------------------------------
+    # Chat with Marketplace Assistant
+    #-----------------------------------------------------
+    post:
+      security:
+        - OAuth2Security: []
+      summary: Chat Endpoint
+      description: |
+        Send a single query to the service and get the response.
+      operationId: marketplaceChatExecute
+      requestBody:
+        description: |
+          Marketplace Chat execute request payload
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarketplaceChatRequest'
+      tags:
+        - Marketplace Chat
+      responses:
+        201:
+          description: |
+            Created.
+            Marketplace Chat execute response payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketplaceChatResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+        500:
+          description: |
+            Internal Server Error.
+            An error occurred while executing test using Marketplace Chat service.
+
+  ######################################################
   # User resource APIs
   ######################################################
   /me/change-password:
@@ -5989,6 +6061,66 @@ components:
           type: string
           description: completion result
           example: "The pet with ID 123 is available. Here are the details: - ID: 123 - Name: asd - Status: available"
+    ChatMessage:
+      required:
+        - content
+        - role
+      type: object
+      properties:
+        role:
+          type: string
+        content:
+          type: string
+    ChatMessageList:
+      required:
+        - messageList
+      type: object
+      properties:
+        messageList:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+    MarketplaceChatRequest:
+      required:
+        - message
+        - messageList
+        - tenantDomain
+      type: object
+      properties:
+        tenantDomain:
+          type: string
+        message:
+          type: string
+        messageList:
+          $ref: '#/components/schemas/ChatMessageList'
+    MarketplaceChatApiList:
+      required:
+        - apiId
+        - apiName
+      type: object
+      properties:
+        apiId:
+          type: string
+        apiName:
+          type: string
+    MarketplaceChatResponse:
+      required:
+        - response
+      type: object
+      properties:
+        response:
+          type: string
+        apis:
+          type: array
+          items:
+            $ref: '#/components/schemas/MarketplaceChatApiList'
+    MarketplaceChatApiCountResponse:
+      required:
+        - count
+      type: object
+      properties:
+        count:
+          type: string
   responses:
     BadRequest:
       description: Bad Request. Invalid request or validation error.
@@ -6090,6 +6222,18 @@ components:
             description: The entity of the request was not in a supported format
             moreInfo: ""
             error: []
+    TooManyRequests:
+      description: Too many requests.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 429
+            message: TooManyRequests
+            description: The user has exceeded the rate limit
+            moreInfo: ""
+            error: [ ]
   parameters:
     parentCommentID:
       name: replyTo

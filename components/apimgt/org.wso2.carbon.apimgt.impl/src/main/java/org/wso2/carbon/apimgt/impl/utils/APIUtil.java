@@ -10393,6 +10393,23 @@ public final class APIUtil {
     }
 
     /**
+     * Check whether Marketplace Chat feature is enabled
+     *
+     * @return returns true if API Chat feature is enabled, false if disabled.
+     */
+    public static boolean isMarketplaceAssistantEnabled() {
+
+        APIManagerConfiguration config = ServiceReferenceHolder.getInstance().
+                getAPIManagerConfigurationService().getAPIManagerConfiguration();
+        String isMarketplaceAssistantEnabled = config.getFirstProperty(APIConstants.MARKETPLACE_ASSISTANT_ENABLED);
+        if (isMarketplaceAssistantEnabled == null) {
+            return false;
+        }
+
+        return Boolean.parseBoolean(isMarketplaceAssistantEnabled);
+    }
+
+    /**
      * Checks whether an auth token is provided for AI features to use. This token is utilized for authentication and
      * throttling purposes.
      *
@@ -10417,7 +10434,7 @@ public final class APIUtil {
      * @return CloseableHttpResponse of the GET call
      * @throws APIManagementException
      */
-    public static CloseableHttpResponse getAIServiceHealth(String endpointConfigName, String resource)
+    public static CloseableHttpResponse getMarketplaceChatApiCount(String endpointConfigName, String resource)
             throws APIManagementException {
 
         APIManagerConfiguration config = ServiceReferenceHolder.getInstance().

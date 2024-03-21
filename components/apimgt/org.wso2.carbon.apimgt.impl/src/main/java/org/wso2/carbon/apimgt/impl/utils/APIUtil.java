@@ -10434,7 +10434,7 @@ public final class APIUtil {
      * @return CloseableHttpResponse of the GET call
      * @throws APIManagementException
      */
-    public static CloseableHttpResponse getAIServiceHealth(String endpointConfigName, String resource)
+    public static CloseableHttpResponse getMarketplaceChatApiCount(String endpointConfigName, String resource)
             throws APIManagementException {
 
         APIManagerConfiguration config = ServiceReferenceHolder.getInstance().

@@ -117,20 +117,6 @@ public class AiApiServiceImpl implements AiApiService {
     }
 
     public Response getApiChatHealth(MessageContext messageContext) {
-        try {
-            if (APIUtil.isApiChatEnabled()) {
-                CloseableHttpResponse response = APIUtil.getAIServiceHealth(APIConstants.API_CHAT_ENDPOINT,
-                        APIConstants.API_CHAT_HEALTH_RESOURCE);
-                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                    return Response.ok().build();
-                } else {
-                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
-                }
-            }
-        } catch (APIManagementException e) {
-            String errorMessage = "Error encountered while connecting to the API Chat service";
-            RestApiUtil.handleInternalServerError(errorMessage, e, log);
-        }
         return null;
     }
 
@@ -138,7 +124,7 @@ public class AiApiServiceImpl implements AiApiService {
     public Response getMarketplaceChatApiCount(MessageContext messageContext) throws APIManagementException {
         try {
             if (APIUtil.isMarketplaceAssistantEnabled()) {
-                CloseableHttpResponse response = APIUtil.getAIServiceHealth(APIConstants.MARKETPLACE_ASSISTANT_ENDPOINT, APIConstants.MARKETPLACE_ASSISTANT_API_COUNT_RESOURCE);
+                CloseableHttpResponse response = APIUtil.getMarketplaceChatApiCount(APIConstants.MARKETPLACE_ASSISTANT_ENDPOINT, APIConstants.MARKETPLACE_ASSISTANT_API_COUNT_RESOURCE);
                 int statusCode = response.getStatusLine().getStatusCode();
                 if (statusCode == HttpStatus.SC_OK) {
                     String responseStr = EntityUtils.toString(response.getEntity());

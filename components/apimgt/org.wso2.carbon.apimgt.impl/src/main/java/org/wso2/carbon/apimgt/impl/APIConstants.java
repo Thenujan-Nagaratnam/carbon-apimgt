@@ -1711,7 +1711,11 @@ public final class APIConstants {
     public static final String API_SPEC_TYPE_REST = "api_spec";
     public static final String API_SPEC_TYPE_GRAPHQL = "sdl_schema";
     public static final String API_SPEC_TYPE_ASYNC = "async_spec";
-    public static final String API_TYPE_REST = "HTTP";
+    public static final String API_TYPE_HTTP = "HTTP";
+    public static final String API_TYPE_WEBHOOK = "WEBHOOK";
+
+    public static final String API_TYPE_REST = "REST";
+
     public static final String API_TYPE_GRAPHQL = "GRAPHQL";
     public static final String API_TYPE_ASYNC = "ASYNC";
 

@@ -115,17 +115,25 @@ public class AIAssistantApiPublisherNotifier extends ApisNotifier{
             String api_type = api.getType();
 
             JSONObject payload = new JSONObject();
-            payload.put(APIConstants.API_SPEC_TYPE, api_type);
 
             switch (api_type) {
-                case APIConstants.API_TYPE_REST:
-                    payload.put(APIConstants.API_SPEC_TYPE_REST, api.getSwaggerDefinition());
-                    break;
                 case APIConstants.API_TYPE_GRAPHQL:
-                    payload.put(APIConstants.API_SPEC_TYPE_GRAPHQL, api.getSwaggerDefinition());
+                    payload.put(APIConstants.API_SPEC_TYPE_GRAPHQL, api.getGraphQLSchema());
+                    payload.put(APIConstants.API_SPEC_TYPE, APIConstants.API_TYPE_GRAPHQL);
                     break;
                 case APIConstants.API_TYPE_ASYNC:
-                    payload.put(APIConstants.API_SPEC_TYPE_ASYNC, api.getSwaggerDefinition());
+                case APIConstants.API_TYPE_WS:
+                case APIConstants.API_TYPE_WEBSUB:
+                case APIConstants.API_TYPE_SSE:
+                case APIConstants.API_TYPE_WEBHOOK:
+                    payload.put(APIConstants.API_SPEC_TYPE_ASYNC, api.getAsyncApiDefinition());
+                    payload.put(APIConstants.API_SPEC_TYPE, APIConstants.API_TYPE_ASYNC);
+                    break;
+                case APIConstants.API_TYPE_HTTP:
+                case APIConstants.API_TYPE_SOAP:
+                case APIConstants.API_TYPE_SOAPTOREST:
+                    payload.put(APIConstants.API_SPEC_TYPE_REST, api.getSwaggerDefinition());
+                    payload.put(APIConstants.API_SPEC_TYPE, APIConstants.API_TYPE_REST);
                     break;
                 default:
                     break;

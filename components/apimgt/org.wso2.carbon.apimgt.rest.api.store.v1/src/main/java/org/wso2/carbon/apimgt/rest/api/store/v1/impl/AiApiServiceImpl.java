@@ -17,10 +17,7 @@ import org.apache.cxf.jaxrs.ext.MessageContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 
-import org.wso2.carbon.apimgt.rest.api.store.v1.dto.ApiChatExecuteRequestDTO;
-import org.wso2.carbon.apimgt.rest.api.store.v1.dto.ApiChatExecuteResponseDTO;
-import org.wso2.carbon.apimgt.rest.api.store.v1.dto.ApiChatPreparationResponseDTO;
-import org.wso2.carbon.apimgt.rest.api.store.v1.dto.ErrorDTO;
+import org.wso2.carbon.apimgt.rest.api.store.v1.dto.*;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.rest.api.util.utils.RestApiUtil;
 
@@ -132,6 +129,78 @@ public class AiApiServiceImpl implements AiApiService {
             }
         } catch (APIManagementException e) {
             String errorMessage = "Error encountered while connecting to the API Chat service";
+            RestApiUtil.handleInternalServerError(errorMessage, e, log);
+        }
+        return null;
+    }
+
+    @Override
+    public Response getMarketplaceChatApiCount(MessageContext messageContext) throws APIManagementException {
+        try {
+            if (APIUtil.isMarketplaceAssistantEnabled()) {
+                CloseableHttpResponse response = APIUtil.getAIServiceHealth(APIConstants.MARKETPLACE_ASSISTANT_ENDPOINT, APIConstants.MARKETPLACE_ASSISTANT_API_COUNT_RESOURCE);
+                int statusCode = response.getStatusLine().getStatusCode();
+                if (statusCode == HttpStatus.SC_OK) {
+                    String responseStr = EntityUtils.toString(response.getEntity());
+                    if (log.isDebugEnabled()) {
+                        log.debug("Successfully completed the Marketplace Assistant api count call with status code: " + statusCode);
+                    }
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    MarketplaceChatApiCountResponseDTO executeResponseDTO = objectMapper.readValue(responseStr,
+                            MarketplaceChatApiCountResponseDTO.class);
+                    return Response.status(Response.Status.OK).entity(executeResponseDTO).build();
+                } else {
+                    String errorMessage = "Error encountered while executing the Marketplace Assistant service to accomodate the " +
+                            "specified testing requirement";
+                    log.error(errorMessage);
+                    RestApiUtil.handleInternalServerError(errorMessage, log);
+                }
+            }
+        } catch (APIManagementException | IOException e) {
+            String errorMessage = "Error encountered while executing the execute statement of Marketplace Assistant service";
+            RestApiUtil.handleInternalServerError(errorMessage, e, log);
+        }
+        return null;
+    }
+
+    @Override
+    public Response marketplaceChatExecute(MarketplaceChatRequestDTO marketplaceChatRequestDTO, MessageContext messageContext) throws APIManagementException {
+        // Determine whether the request body is valid. Request should either initialize test or provide
+        // test execution progress.
+        boolean isChatRequest = !StringUtils.isEmpty(marketplaceChatRequestDTO.getMessage());
+        boolean isOrgProvided = !StringUtils.isEmpty(marketplaceChatRequestDTO.getTenantDomain());
+        if (!(isChatRequest || isOrgProvided)) {
+            String errorMessage = "Payload is badly formatted. Expected to have either 'message', 'TenantDomain' and 'Organization' " +
+                    "or 'response'";
+            RestApiUtil.handleBadRequest(errorMessage, log);
+            return null;
+        }
+
+        try {
+            if (APIUtil.isMarketplaceAssistantEnabled()) {
+                String payload = payload = new Gson().toJson(marketplaceChatRequestDTO);
+                CloseableHttpResponse response = APIUtil.invokeAIService(APIConstants.MARKETPLACE_ASSISTANT_ENDPOINT,
+                        APIConstants.MARKETPLACE_ASSISTANT_AUTH_TOKEN, APIConstants.MARKETPLACE_ASSISTANT_CHAT_RESOURCE, payload,
+                        "");
+                int statusCode = response.getStatusLine().getStatusCode();
+                if (statusCode == HttpStatus.SC_CREATED) {
+                    String responseStr = EntityUtils.toString(response.getEntity());
+                    if (log.isDebugEnabled()) {
+                        log.debug("Successfully completed the Marketplace Assistant execute call with status code: " + statusCode);
+                    }
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    MarketplaceChatResponseDTO executeResponseDTO = objectMapper.readValue(responseStr,
+                            MarketplaceChatResponseDTO.class);
+                    return Response.status(Response.Status.CREATED).entity(executeResponseDTO).build();
+                } else {
+                    String errorMessage = "Error encountered while executing the Marketplace Assistant service to accomodate the " +
+                            "specified testing requirement";
+                    log.error(errorMessage);
+                    RestApiUtil.handleInternalServerError(errorMessage, log);
+                }
+            }
+        } catch (APIManagementException | IOException e) {
+            String errorMessage = "Error encountered while executing the execute statement of Marketplace Assistant service";
             RestApiUtil.handleInternalServerError(errorMessage, e, log);
         }
         return null;

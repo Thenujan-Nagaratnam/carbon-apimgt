@@ -15,6 +15,9 @@
  */
 package org.wso2.carbon.apimgt.impl.notifier;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.simple.JSONObject;
@@ -32,6 +35,10 @@ import org.wso2.carbon.apimgt.impl.notifier.events.Event;
 import org.wso2.carbon.apimgt.impl.notifier.exceptions.NotifierException;
 import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
+
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * The default API notification service implementation in which API creation, update, delete and LifeCycle change
@@ -181,6 +188,7 @@ public class MarketplaceAssistantApiPublisherNotifier extends ApisNotifier{
                 switch (api_type) {
                     case APIConstants.API_TYPE_GRAPHQL:
                         payload.put(APIConstants.API_SPEC_TYPE_GRAPHQL, api.getGraphQLSchema());
+                        payload.put("reduced_spec", reduceGraphQLSchema(api.getGraphQLSchema()));
                         break;
                     case APIConstants.API_TYPE_ASYNC:
                     case APIConstants.API_TYPE_WS:
@@ -188,12 +196,14 @@ public class MarketplaceAssistantApiPublisherNotifier extends ApisNotifier{
                     case APIConstants.API_TYPE_SSE:
                     case APIConstants.API_TYPE_WEBHOOK:
                         payload.put(APIConstants.API_SPEC_TYPE_ASYNC, api.getAsyncApiDefinition());
+                        payload.put("reduced_spec", reduceAsyncAPISpec(api.getAsyncApiDefinition()));
                         break;
                     case APIConstants.API_TYPE_HTTP:
                     case APIConstants.API_TYPE_PRODUCT:
                     case APIConstants.API_TYPE_SOAP:
                     case APIConstants.API_TYPE_SOAPTOREST:
                         payload.put(APIConstants.API_SPEC_TYPE_REST, api.getSwaggerDefinition());
+                        payload.put("reduced_spec", reduceOpenAPISpec(api.getSwaggerDefinition()));
                         break;
                     default:
                         break;
@@ -234,5 +244,111 @@ public class MarketplaceAssistantApiPublisherNotifier extends ApisNotifier{
                 log.error(errorMessage, e);
             }
         }
+    }
+
+    public static Map<String, String> reduceOpenAPISpec(String specString) {
+
+        Gson gson = new Gson();
+
+        JsonObject spec = gson.fromJson(specString, JsonObject.class);
+
+        JsonObject info = spec.get("info").getAsJsonObject();
+
+        JsonElement titleElement = info.get("title");
+        String title = (titleElement != null && titleElement.isJsonPrimitive()) ? titleElement.getAsString() : "";
+
+        JsonElement descriptionElement = info.get("description");
+        String description = (descriptionElement != null && descriptionElement.isJsonPrimitive()) ? descriptionElement.getAsString() : "";
+
+        List<String> endpoints = new ArrayList<>();
+        JsonObject paths = spec.get("paths").getAsJsonObject();
+
+        List<String> validMethods = new ArrayList<>(Arrays.asList("get", "post", "patch", "delete", "put"));
+
+        for (String path : paths.keySet()) {
+            JsonObject pathJson = paths.get(path).getAsJsonObject();
+            for (String method : pathJson.keySet()) {
+                if (validMethods.contains(method.toLowerCase())) {
+                    JsonObject operation = pathJson.get(method).getAsJsonObject();
+                    String operationDescription;
+                    if (operation.keySet().contains("description")){
+                        operationDescription = operation.get("description").getAsString();
+                    } else {
+                        JsonElement operationDescriptionElement = operation.get("summary");
+                        operationDescription = (operationDescriptionElement != null && operationDescriptionElement.isJsonPrimitive()) ? operationDescriptionElement.getAsString() : "";
+                    }
+                    String res = method.toUpperCase() + " " + path + " " + operationDescription;
+                    endpoints.add(res);
+                }
+            }
+        }
+
+        JSONObject specMap = new JSONObject();
+
+        specMap.put("title", title);
+        specMap.put("description", description);
+        specMap.put("endpoints", endpoints);
+
+        return specMap;
+    }
+
+    public static Map<String, String> reduceAsyncAPISpec(String specString) {
+
+        Gson gson = new Gson();
+
+        JsonObject spec = gson.fromJson(specString, JsonObject.class);
+
+        JsonObject info = spec.get("info").getAsJsonObject();
+
+        JsonElement titleElement = info.get("title");
+        String title = (titleElement != null && titleElement.isJsonPrimitive()) ? titleElement.getAsString() : "";
+
+        JsonElement descriptionElement = info.get("description");
+        String description = (descriptionElement != null && descriptionElement.isJsonPrimitive()) ? descriptionElement.getAsString() : "";
+
+        List<String> channels = new ArrayList<>();
+        JsonObject channels_list = spec.get("channels").getAsJsonObject();
+
+        for (String channel : channels_list.keySet()) {
+            JsonObject channelJson = channels_list.get(channel).getAsJsonObject();
+            JsonElement channelDescriptionElement = channelJson.get("description");
+            String channelDescription = (channelDescriptionElement != null && channelDescriptionElement.isJsonPrimitive()) ? channelDescriptionElement.getAsString() : "";
+            String tuple = "(\"" + channel + "\", \"" + channelDescription + "\")";
+            channels.add(tuple);
+        }
+
+        JSONObject specMap = new JSONObject();
+
+        specMap.put("title", title);
+        specMap.put("description", description);
+        specMap.put("channels", channels);
+
+        return specMap;
+    }
+
+    public static Map<String, String> reduceGraphQLSchema(String schemaText) {
+        String cleanedSchema = schemaText.replaceAll("\\s+", " ");
+
+        Map<String, String> schemaMap = new HashMap<>();
+
+        Pattern queriesPattern = Pattern.compile("type Query \\{([^}]*)");
+        Matcher queriesMatcher = queriesPattern.matcher(cleanedSchema);
+        if (queriesMatcher.find()) {
+            schemaMap.put("Queries", queriesMatcher.group(1).trim());
+        }
+
+        Pattern mutationsPattern = Pattern.compile("type Mutation \\{([^}]*)");
+        Matcher mutationsMatcher = mutationsPattern.matcher(cleanedSchema);
+        if (mutationsMatcher.find()) {
+            schemaMap.put("Mutations", mutationsMatcher.group(1).trim());
+        }
+
+        Pattern subscriptionsPattern = Pattern.compile("type Subscription \\{([^}]*)");
+        Matcher subscriptionsMatcher = subscriptionsPattern.matcher(cleanedSchema);
+        if (subscriptionsMatcher.find()) {
+            schemaMap.put("Subscriptions", subscriptionsMatcher.group(1).trim());
+        }
+
+        return schemaMap;
     }
 }

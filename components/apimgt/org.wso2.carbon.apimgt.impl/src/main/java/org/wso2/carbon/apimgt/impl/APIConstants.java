@@ -710,6 +710,8 @@ public final class APIConstants {
         public static final String GUARDRAIL_PROVIDER_AWSBEDROCK_CALLOUT_URL = "request_url";
         public static final String GUARDRAIL_PROVIDER_AWSBEDROCK_CALLOUT_PAYLOAD = "request_payload";
 
+        public static final String GUARDRAIL_PROVIDER_WSO2_TYPE = "wso2-guardrails";
+        public static final String GUARDRAIL_PROVIDER_WSO2_CALLOUT_RESOURCE = "resource";
         // Retry configuration
         public static final String RETRIEVAL_TIMEOUT = "retrieval_timeout";
         public static final String RETRY_COUNT = "retry_count";

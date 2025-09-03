@@ -56,7 +56,7 @@ public class AzureAiFoundryLLMProviderService extends BuiltInLLMProviderService 
             llmProvider.setDescription(
                     APIConstants.AIAPIConstants.LLM_PROVIDER_SERVICE_AZURE_AI_DESCRIPTION);
             llmProvider.setBuiltInSupport(true);
-
+            llmProvider.setMultipleVendorSupport(true);
             llmProvider.setApiDefinition(readApiDefinition("repository" + File.separator + "resources"
                     + File.separator + "api_definitions" + File.separator
                     + APIConstants.AIAPIConstants

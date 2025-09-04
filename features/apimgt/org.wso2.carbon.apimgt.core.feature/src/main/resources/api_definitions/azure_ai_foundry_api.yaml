@@ -11,7 +11,6 @@ servers:
     variables:
       resource-name:
         default: your-resource-name
-        description: The name of your specific Azure AI Services resource.
 security:
   - bearer:
       - api.read

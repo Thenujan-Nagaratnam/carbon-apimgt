@@ -129,11 +129,11 @@ public class APIConstants {
         public static final String LLM_PROVIDER_SERVICE_ANTHROPIC_CLAUDE_KEY = "x-api-key";
         public static final String LLM_PROVIDER_SERVICE_ANTHROPIC_CLAUDE_API_DEFINITION_FILE_NAME = "anthropic_api.yaml";
         public static final String LLM_PROVIDER_SERVICE_ANTHROPIC_CLAUDE_DESCRIPTION = "Anthropic Claude LLM Service";
-        public static final String LLM_PROVIDER_SERVICE_AZURE_AI_NAME = "AzureAIFoundry";
-        public static final String LLM_PROVIDER_SERVICE_AZURE_AI_VERSION = "1.0.0";
-        public static final String LLM_PROVIDER_SERVICE_AZURE_AI_CONNECTOR = "azureAiFoundry_1.0.0";
-        public static final String LLM_PROVIDER_SERVICE_AZURE_AI_DESCRIPTION = "Azure AI Foundry service";
-        public static final String LLM_PROVIDER_SERVICE_AZURE_AI_API_DEFINITION_FILE_NAME = "azure_foundry_api.yaml";
+        public static final String LLM_PROVIDER_SERVICE_AZURE_AI_FOUNDRY_NAME = "AzureAIFoundry";
+        public static final String LLM_PROVIDER_SERVICE_AZURE_AI_FOUNDRY_VERSION = "1.0.0";
+        public static final String LLM_PROVIDER_SERVICE_AZURE_AI_FOUNDRY_CONNECTOR = "azureAiFoundry_1.0.0";
+        public static final String LLM_PROVIDER_SERVICE_AZURE_AI_FOUNDRY_DESCRIPTION = "Azure AI Foundry service";
+        public static final String LLM_PROVIDER_SERVICE_AZURE_AI_FOUNDRY_API_DEFINITION_FILE_NAME = "azure_ai_foundry_api.yaml";
         public static final String LLM_PROVIDER_SERVICE_METADATA_REQUEST_MODEL = "requestModel";
         public static final String LLM_PROVIDER_SERVICE_METADATA_RESPONSE_MODEL = "responseModel";
         public static final String LLM_PROVIDER_SERVICE_METADATA_MODEL = "model";

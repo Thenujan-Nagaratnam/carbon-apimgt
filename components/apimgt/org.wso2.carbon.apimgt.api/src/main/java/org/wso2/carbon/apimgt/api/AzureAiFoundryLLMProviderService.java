@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 WSO2 LLC. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2025 WSO2 LLC. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -42,7 +42,7 @@ public class AzureAiFoundryLLMProviderService extends BuiltInLLMProviderService 
     @Override
     public String getType() {
 
-        return APIConstants.AIAPIConstants.LLM_PROVIDER_SERVICE_AZURE_AI_CONNECTOR;
+        return APIConstants.AIAPIConstants.LLM_PROVIDER_SERVICE_AZURE_AI_FOUNDRY_CONNECTOR;
     }
 
     @Override
@@ -51,16 +51,16 @@ public class AzureAiFoundryLLMProviderService extends BuiltInLLMProviderService 
 
         try {
             LLMProvider llmProvider = new LLMProvider();
-            llmProvider.setName(APIConstants.AIAPIConstants.LLM_PROVIDER_SERVICE_AZURE_AI_NAME);
-            llmProvider.setApiVersion(APIConstants.AIAPIConstants.LLM_PROVIDER_SERVICE_AZURE_AI_VERSION);
+            llmProvider.setName(APIConstants.AIAPIConstants.LLM_PROVIDER_SERVICE_AZURE_AI_FOUNDRY_NAME);
+            llmProvider.setApiVersion(APIConstants.AIAPIConstants.LLM_PROVIDER_SERVICE_AZURE_AI_FOUNDRY_VERSION);
             llmProvider.setDescription(
-                    APIConstants.AIAPIConstants.LLM_PROVIDER_SERVICE_AZURE_AI_DESCRIPTION);
+                    APIConstants.AIAPIConstants.LLM_PROVIDER_SERVICE_AZURE_AI_FOUNDRY_DESCRIPTION);
             llmProvider.setBuiltInSupport(true);
             llmProvider.setMultipleVendorSupport(true);
             llmProvider.setApiDefinition(readApiDefinition("repository" + File.separator + "resources"
                     + File.separator + "api_definitions" + File.separator
                     + APIConstants.AIAPIConstants
-                    .LLM_PROVIDER_SERVICE_AZURE_AI_API_DEFINITION_FILE_NAME));
+                    .LLM_PROVIDER_SERVICE_AZURE_AI_FOUNDRY_API_DEFINITION_FILE_NAME));
 
             LLMProviderConfiguration llmProviderConfiguration = new LLMProviderConfiguration();
             LLMProviderAuthenticationConfiguration llmProviderAuthenticationConfiguration =

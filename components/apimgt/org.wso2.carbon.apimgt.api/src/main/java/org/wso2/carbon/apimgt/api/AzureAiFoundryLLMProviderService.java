@@ -102,9 +102,9 @@ public class AzureAiFoundryLLMProviderService extends BuiltInLLMProviderService 
             modelList.add(new LLMModel(APIConstants.AIAPIConstants.LLM_MODEL_PROVIDER_AZURE_FOUNDRY_OPENAI,
                     Arrays.asList("gpt-4o", "gpt-4o-mini", "o3-mini")));
             modelList.add(new LLMModel(APIConstants.AIAPIConstants.LLM_MODEL_PROVIDER_AZURE_FOUNDRY_COHERE,
-                    Arrays.asList("command-a-03-2025")));
+                    Arrays.asList("cohere-command-a")));
             modelList.add(new LLMModel(APIConstants.AIAPIConstants.LLM_MODEL_PROVIDER_AZURE_FOUNDRY_XAI,
-                    Arrays.asList("grok-4-0709", "grok-code-fast-1")));
+                    Arrays.asList("grok-3", "grok-3-mini")));
             llmProvider.setModelList(modelList);
 
             llmProvider.setConfigurations(llmProviderConfiguration.toJsonString());
